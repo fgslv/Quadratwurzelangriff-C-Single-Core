@@ -11,8 +11,10 @@
 
 ll babystepGiantstepAlgorithm(ll n, ll g, ll a)
 {
-	ll i = -1, j = -1;
-	ll m = sqrt((double) n - 1) + 1;
+	ll i = -1, j = -1, result = -1;
+
+	ll m = sqrt((double)n - 1) + 1;
+	debug_printf("\tm: %llu\n", m);
 
 	ll *babyStepTable = (ll*) malloc(m * sizeof(ll));
 	if (babyStepTable == NULL)
@@ -20,48 +22,60 @@ ll babystepGiantstepAlgorithm(ll n, ll g, ll a)
 		fprintf(stderr, "Allocating BabyStepTable failed: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	debug_printf("\tm: %llu\n", m);
 
+	calcBabyStepTable(babyStepTable, m, g, n);
+	result = calcGiantStepAndCheck(babyStepTable, m, g, n, a);
+
+	free(babyStepTable);
+	return result;
+}
+
+void calcBabyStepTable(ll* babyStepTable, ll m, ll g, ll n)
+{
+	ll j;
 	debug_printf("\tBabyStep ");
 	for (j = 0; j < m; j++)
 	{
 		babyStepTable[j] = modpow(g, (ll) j, n);
 	}
-#ifdef DEBUG
 	printTable(babyStepTable, m);
-#endif
+}
+
+ll calcGiantStepAndCheck(ll* babyStepTable, ll m, ll g, ll n, ll a)
+{
+	ll i, j, result;
 
 	debug_printf("\tGianStep [");
 	for (i = 0; i < m; i++)
 	{
 		ll exp = ((n - m) - 1) * i;
 		ll tmpErg = modpow(g, exp, n);
-		ll result = mulmod(a, tmpErg, n);
-
-		debug_printf("%llu,", result);
+		ll res = mulmod(a, tmpErg, n);
 
 		for (j = 0; j < m; j++)
 		{
-			if (babyStepTable[j] == result)
+			if (babyStepTable[j] == res)
 			{
-				debug_printf("\b]\n\n");
+				result = i * m + j;
+				debug_printf("%llu,",result);
+#ifndef NDEBUG
 				goto out;
+#endif
 			}
 		}
 	}
 out:
-	free(babyStepTable);
-
-	return i * m + j;
+	debug_printf("\b]\n\n");
+	return result;
 }
 
 void printTable(ll *table, ll size)
 {
-	printf("[");
+	debug_printf("[");
 	int i;
 	for (i = 0; i < size; i++)
 	{
-			printf("%llu,", table[i]);
+			debug_printf("%llu,", table[i]);
 	}
-	printf("\b]\n");
+	debug_printf("\b]\n");
 }
