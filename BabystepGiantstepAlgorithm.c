@@ -1,64 +1,60 @@
-#include "Utilities.h"
-#include "BabystepGiantstepAlgorithm.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
-#define DEBUG 0
+#include "Utilities.h"
+#include "BabystepGiantstepAlgorithm.h"
+#include "Debug.h"
+
 
 ll babystepGiantstepAlgorithm(ll n, ll g, ll a)
 {
-	int i, j;
+	ll i = -1, j = -1;
 	ll m = sqrt((double) n - 1) + 1;
+
 	ll *babyStepTable = (ll*) malloc(m * sizeof(ll));
 	if (babyStepTable == NULL)
 	{
 		fprintf(stderr, "Allocating BabyStepTable failed: %s\n", strerror(errno));
+		m = 0;
 		goto out_alloc_failed;
 	}
-#if DEBUG == 1
-	printf("\tm: %llu\n", m);
-#endif
-#if DEBUG == 1
-	printf("\tBabyStep ");
-#endif
+	debug_printf("\tm: %llu\n", m);
+
+	debug_printf("\tBabyStep ");
 	for (j = 0; j < m; j++)
 	{
 		babyStepTable[j] = modpow(g, (ll) j, n);
 	}
-#if DEBUG == 1
+#ifdef DEBUG
 	printTable(babyStepTable, m);
 #endif
-#if DEBUG == 1
-	printf("\tGianStep [");
-#endif
+
+	debug_printf("\tGianStep [");
 	for (i = 0; i < m; i++)
 	{
 		ll exp = ((n - m) - 1) * i;
 		ll tmpErg = modpow(g, exp, n);
 		ll result = mulmod(a, tmpErg, n);
-#if DEBUG == 1
-		printf("%llu,", result);
-#endif
+
+		debug_printf("%llu,", result);
+
 		for (j = 0; j < m; j++)
 		{
 			if (babyStepTable[j] == result)
 			{
-#if DEBUG == 1
-				printf("\b]\n\n");
-#endif
+				debug_printf("\b]\n\n");
 				goto out;
 			}
 		}
 	}
 out:
 	free(babyStepTable);
-	return i * m + j;
 
 out_alloc_failed:
-	return -1;
+	return i * m + j;
 }
 
 void printTable(ll *table, ll size)
