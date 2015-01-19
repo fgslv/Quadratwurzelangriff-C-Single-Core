@@ -18,8 +18,7 @@ ll babystepGiantstepAlgorithm(ll n, ll g, ll a)
 	if (babyStepTable == NULL)
 	{
 		fprintf(stderr, "Allocating BabyStepTable failed: %s\n", strerror(errno));
-		m = 0;
-		goto out_alloc_failed;
+		exit(EXIT_FAILURE);
 	}
 	debug_printf("\tm: %llu\n", m);
 
@@ -53,7 +52,6 @@ ll babystepGiantstepAlgorithm(ll n, ll g, ll a)
 out:
 	free(babyStepTable);
 
-out_alloc_failed:
 	return i * m + j;
 }
 
