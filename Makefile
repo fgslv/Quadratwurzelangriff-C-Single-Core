@@ -1,5 +1,5 @@
 C = gcc
-CFLAGS = -DNDEBUG
+CFLAGS = 
 INCLUDES +=
 LFLGAS += 
 LIBS += -lm

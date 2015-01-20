@@ -4,46 +4,73 @@
 #include <string.h>
 #include <math.h>
 
-#include "Utilities.h"
 #include "BabystepGiantstepAlgorithm.h"
+#include "Utilities.h"
 #include "Debug.h"
+
+#define MAX_TABLE_SIZE 134217728
 
 
 ll babystepGiantstepAlgorithm(ll n, ll g, ll a)
 {
-	ll i = -1, j = -1, result = -1;
-
 	ll m = sqrt((double)n - 1) + 1;
 	debug_printf("\tm: %llu\n", m);
 
-	ll *babyStepTable = (ll*) malloc(m * sizeof(ll));
+	ll tableSize = (m < MAX_TABLE_SIZE) ? m : MAX_TABLE_SIZE;
+	ll numberOfBSGSSteps = (m / tableSize);
+	ll slidingWindowSize = tableSize;
+	ll slidingWindowSizeLastIteration = m % tableSize;
+
+	debug_printf("numberOfBSGSSteps = %llu, slidingWindowSize = %llu, slidingWindowSizeLastIteration = %llu\n",
+			numberOfBSGSSteps, slidingWindowSize, slidingWindowSizeLastIteration);
+
+	ll *babyStepTable = (ll*) malloc(tableSize * sizeof(ll));
 	if (babyStepTable == NULL)
 	{
 		fprintf(stderr, "Allocating BabyStepTable failed: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
-	calcBabyStepTable(babyStepTable, m, g, n);
-	result = calcGiantStepAndCheck(babyStepTable, m, g, n, a);
+	ll result = -1;
+	int k;
+	for (k = 0; k < numberOfBSGSSteps; ++k)
+	{
+		ll start = k * slidingWindowSize;
+		ll end = start + slidingWindowSize;
 
+		calcBabyStepTableSlidingWindow(babyStepTable, m, g, n, start, end);
+		result = calcGiantStepAndCheckSlidingWindow(babyStepTable, m, g, n, a, slidingWindowSize);
+		
+		if (result != -1)
+		{
+			goto out;
+		}
+	}
+	calcBabyStepTableSlidingWindow(babyStepTable, m, g, n, numberOfBSGSSteps*slidingWindowSize, m);
+	result = calcGiantStepAndCheckSlidingWindow(babyStepTable, m, g, n, a, slidingWindowSize);
+
+out:
 	free(babyStepTable);
 	return result;
 }
 
-void calcBabyStepTable(ll* babyStepTable, ll m, ll g, ll n)
+
+void calcBabyStepTableSlidingWindow(ll* babyStepTable, ll m, ll g, ll n, ll start, ll end)
 {
 	ll j;
+
 	debug_printf("\tBabyStep ");
-	for (j = 0; j < m; j++)
+	for (j = 0; j < (end-start); j++)
 	{
-		babyStepTable[j] = modpow(g, (ll) j, n);
+		babyStepTable[j] = modpow(g, (ll) j+start, n);
 	}
-	printTable(babyStepTable, m);
+	printTable(babyStepTable, end-start);
 }
 
-ll calcGiantStepAndCheck(ll* babyStepTable, ll m, ll g, ll n, ll a)
+
+ll calcGiantStepAndCheckSlidingWindow(ll* babyStepTable, ll m, ll g, ll n, ll a, ll babyStepTableSize)
 {
-	ll i, j, result;
+	ll i = -1, j = -1, result = -1;
 
 	debug_printf("\tGianStep [");
 	for (i = 0; i < m; i++)
@@ -52,7 +79,7 @@ ll calcGiantStepAndCheck(ll* babyStepTable, ll m, ll g, ll n, ll a)
 		ll tmpErg = modpow(g, exp, n);
 		ll res = mulmod(a, tmpErg, n);
 
-		for (j = 0; j < m; j++)
+		for (j = 0; j < babyStepTableSize; j++)
 		{
 			if (babyStepTable[j] == res)
 			{
@@ -68,6 +95,7 @@ out:
 	debug_printf("\b]\n\n");
 	return result;
 }
+
 
 void printTable(ll *table, ll size)
 {
